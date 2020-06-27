@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+
+
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Login and Registration form example</title>
+    <link rel="stylesheet" type="text/css" href="registration_form.css">
+</head>
+
+<body bgcolor="#E6E6FA" onload="blockFunction()">
+    <h2>Registration</h2>
+    <!-- <form> -->
+    <input type="text" name="mobileNumber" id="mobileNumber" placeholder="Mobile Number"><br />
+    <input type="text" name="firstName" id="firstName" placeholder="First name"><br />
+    <input type="text" name="lastName" id="lastName" placeholder="Last name"><br />
+    <label for="r4">Date Of Birth</label><br />
+    <input type="date" id="dateOfBirth" name="dateOfBirth" min="1900-12-31"><br><br>
+    <input type="radio" name="genderS" value="male">Male</input>
+    <input type="radio" name="genderS" value="female">Female</input> <br />
+    <input type="text" name="email" id="email" placeholder="Email"><br />
+
+    <button onclick="save()" type="submit" value="Submit" id="register">Register</button><br />
+    <!-- </form> -->
+    <div id="myDIV">
+        <button type="submit" onclick="login()" value="Submit" id="login" disabled>Login</button>
+    </div>
+
+
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script type="text/javascript">
+        function blockFunction() {
+            var x = document.getElementById("myDIV");
+            x.style.display = "none";
+        }
+        function unblockFunction() {
+            var x = document.getElementById("myDIV");
+            x.style.display = "block";
+        }
+        function validate(errorMessage) {
+            for (i = 0; i < errorMessage.length; i++) {
+                if (errorMessage[i] == 'REGISTER_USER_FIRST_NAME_EMPTY') {
+                    // var element = document.getElementById("firstName");
+                    // element.setCustomValidity("First Name is empty");
+                    alert("First Name is empty");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_LAST_NAME_EMPTY') {
+                    // var element = document.getElementById("lastName");
+                    // element.setCustomValidity("Last Name is empty");
+                    alert("Last Name is empty");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_MOBILE_NUMBER_NAME_EMPTY') {
+                    // var element = document.getElementById("mobileNumber");
+                    // element.setCustomValidity("Mobile Number is empty");
+                    alert("Mobile Number is empty");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_MOBILE_NUMBER_NOT_VALID') {
+                    // var element = document.getElementById("mobileNumber");
+                    // element.setCustomValidity("Mobile Number is not valid");
+                    alert("Mobile Number is not valid");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_MOBILE_NUMBER_ALREADY_EXIST') {
+                    // var element = document.getElementById("mobileNumber");
+                    // element.setCustomValidity("Mobile Number is already exist");
+                    alert("Mobile Number is already exist");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_EMAIL_EMPTY') {
+                    // var element = document.getElementById("email");
+                    // element.setCustomValidity("Email is empty");
+                    alert("Email is empty");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_EMAIL_NOT_VALID') {
+                    // var element = document.getElementById("email");
+                    // element.setCustomValidity("Please use valid email format");
+                    alert("Please use valid email format");
+                    break;
+                }
+                if (errorMessage[i] == 'REGISTER_USER_EMAIL_ALREADY_EXIST') {
+                    // var element = document.getElementById("email");
+                    // element.setCustomValidity("Email is already exist");
+                    alert("Email is already exist");
+                    break;
+                }
+            }
+        }
+        function save() {
+            var mobileNumber = document.getElementById("mobileNumber").value;
+            var firstName = document.getElementById("firstName").value;
+            var lastName = document.getElementById("lastName").value;
+            var dateOfBirth = document.getElementById("dateOfBirth").value;
+            var gender = "";
+            var email = document.getElementById("email").value;
+            var radios = document.getElementsByName('genderS');
+
+            for (var i = 0, length = radios.length; i < length; i++) {
+                if (radios[i].checked) {
+                    gender = radios[i].value;
+                    break;
+                }
+            }
+
+            var dateOfBirthFormatted = "";
+
+            if (dateOfBirth) {
+                const d = new Date(dateOfBirth)
+                const ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(d);
+                const mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(d);
+                const da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(d);
+                dateOfBirthFormatted = `${da}-${mo}-${ye}`;
+            }
+
+            var userRequest = {
+                mobileNumber: (mobileNumber === undefined) ? "" : mobileNumber,
+                firstName: (firstName === undefined) ? "" : firstName,
+                lastName: (lastName === undefined) ? "" : lastName,
+                dateOfBirth: (dateOfBirth === undefined) ? "" : dateOfBirthFormatted,
+                gender: (gender === undefined) ? "" : gender,
+                email: (email === undefined) ? "" : email,
+            };
+            disableAllField()
+
+            var vm = new Vue({
+                methods: {
+                    loadQuote: function () {
+                        axios.post('http://localhost:9999/create', userRequest, {
+                            headers: {
+                                'Content-type': 'application/json',
+                            }
+                        })
+                            .then((res) => {
+                                var createResponse = res.data;
+                                if (createResponse.errorMessage && createResponse.errorMessage.length) {
+                                    validate(createResponse.errorMessage)
+                                    enableAllField()
+                                    console.log(JSON.stringify(createResponse.errorMessage))
+                                } else {
+                                    console.log("success save" + JSON.stringify(createResponse.userRequest));
+                                    document.getElementById("login").disabled = false;
+                                    unblockFunction()
+                                }
+                            }).catch((res) => {
+                                console.log("err res = " + res)
+                            })
+                    }
+                },
+                created: function () {
+                    this.loadQuote();
+                }
+            })
+
+        }
+
+        function disableAllField() {
+            document.getElementById("mobileNumber").disabled = true;
+            document.getElementById("firstName").disabled = true;
+            document.getElementById("lastName").disabled = true;
+            document.getElementById("dateOfBirth").disabled = true;
+            document.getElementById("email").disabled = true;
+            var radios = document.getElementsByName('genderS');
+            for (var i = 0, length = radios.length; i < length; i++) {
+                radios[i].disabled = true;
+            }
+        }
+        function enableAllField() {
+            document.getElementById("mobileNumber").disabled = false;
+            document.getElementById("firstName").disabled = false;
+            document.getElementById("lastName").disabled = false;
+            document.getElementById("dateOfBirth").disabled = false;
+            document.getElementById("email").disabled = false;
+            var radios = document.getElementsByName('genderS');
+            for (var i = 0, length = radios.length; i < length; i++) {
+                radios[i].disabled = false;
+            }
+        }
+        function login() {
+            console.log("login clicked");
+            disableAllField();
+            alert("login is clicked")
+        }
+
+    </script>
+</body>
+
+</html>
